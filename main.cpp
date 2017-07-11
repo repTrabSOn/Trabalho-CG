@@ -34,6 +34,7 @@ int main(int argc, char * argv[]){
     glutTimerFunc(500, cria_tiros_inimigos, 1);
     glutTimerFunc(10000, reseta_checkpoints, 1);
     glutTimerFunc(10000, restaura_checkpoints, 1);
+    glutTimerFunc(10000, restaura_carro, 1);
 
 
     //joystick

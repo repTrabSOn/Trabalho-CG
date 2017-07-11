@@ -94,6 +94,8 @@ int status = START;
 
 bool flagJoystick = false;
 
+bool gameOver = false;
+
 /////////////////////////////  CARRO //////////////////////////////
 float angMaxRoda = 45.0, angMaxCanhao = 45.0;
 ///////

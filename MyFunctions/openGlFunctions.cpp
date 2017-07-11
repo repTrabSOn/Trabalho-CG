@@ -236,6 +236,21 @@ void restaura_checkpoints(int arg){
 	glutTimerFunc(10000, restaura_checkpoints, 1);
 }
 
+void restaura_carro(int arg){
+	if(!arena.checks.empty()){
+		for(int i = 0; i < arena.cars.size(); i++){
+			if (arena.cars[i].flag_vivo == false){
+				arena.cars[i].flag_vivo = true;
+				arena.cars[i].qtd_tiros = rand()%21;
+				arena.cars[i].vida--;
+				// Setar aki o carro pra posição inicial
+			}
+		}
+	}
+	glutPostRedisplay();
+	glutTimerFunc(10000, restaura_carro, 1);
+}
+
 void desenha_arena(void){
 
 	for(int i = 0; i < arena.enemys.size(); i++){
@@ -275,7 +290,7 @@ void desenha_arena(void){
 }
 
 void desenha_carro(void){
-	for(int j = 0; j < arena.cars.size(); j++){
+	for(int j = 0; j < arena.cars.size() && arena.cars[0].flag_vivo; j++){
 		glPushMatrix();
 			glTranslatef(arena.cars[j].t_carro.tx, arena.cars[j].t_carro.ty - dist_centro_rot_chassi, 0);
 			glRotatef(arena.cars[j].t_carro.rz, 0, 0, 1);
@@ -642,6 +657,7 @@ void teclaPress(unsigned char key, int x, int y){
 }
 
 void tecladoOps(void){
+	if (arena.cars[0].flag_vivo == true){
 	//para manter a roda sempre na posicao original caso nao tenha nada pressionado
 	if(teclas['a'] == false && teclas['d'] == false){
 		for(int i = 0; i < arena.cars[0].rodas_articuldas.size(); i++){
@@ -730,7 +746,7 @@ void tecladoOps(void){
 	else if(arena.cars[0].t_carro.rz < -360){
 		arena.cars[0].t_carro.rz += 360;
 	}
-
+}
 	glutPostRedisplay();
 }
 
