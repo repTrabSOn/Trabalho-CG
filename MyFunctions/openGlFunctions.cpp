@@ -68,6 +68,34 @@ void load_arena(char * path){ //OK
 		}
 	}
 
+	//iniciar checkpoints aqui
+	//1 chekpoint para cada inimigo
+	int ang_ant = 0;
+	for(int i = 0; i < arena.enemys.size(); i++){
+		if(arena.enemys[i].c.tipo == TIPO_INIMIGO){
+			CheckPoint c;
+			c.flag_ativo = true;
+			c.flag_direcao = rand()%2;
+			c.vel = 2.5;
+			c.num_tiros = rand()%21;
+			c.c.t.rz = rand()%360;
+			c.c.raio = arena.enemys[i].c.raio / 2.0;
+			cor C;
+			C.r = 1.0; C.g = 0.0; C.b = 1.0;
+			c.c.c = C;
+
+			if(i > 0){
+				ang_ant += rand()%130;
+				c.c.t.rz = ang_ant;
+			}
+
+			float d = (raio_menor + (raio_maior - raio_menor)/2.0);
+			c.c.t.tx = x_centro + d*cos(c.c.t.rz*M_PI/180.0);
+			c.c.t.ty = y_centro + d*sin(c.c.t.rz*M_PI/180.0);
+			arena.checks.push_back(c);
+		}		
+	}
+
 	cria_carro();
 }
 
@@ -177,6 +205,37 @@ void respawnEnemy (int i){
 	arena.enemys[i].flag_vivo = true;
 }
 
+void reseta_checkpoints(int arg){
+	if(!arena.checks.empty()){
+		int ang_ant = 0;
+		for(int i = 0; i < arena.checks.size(); i++){
+			arena.checks[i].num_tiros = rand()%21;
+			arena.checks[i].c.t.rz = rand()%360;
+			if(i > 0){
+				ang_ant += rand()%130;
+				arena.checks[i].c.t.rz = ang_ant;
+			}
+
+			float d = (raio_menor + (raio_maior - raio_menor)/2.0);
+			arena.checks[i].c.t.tx = x_centro + d*cos(arena.checks[i].c.t.rz*M_PI/180.0);
+			arena.checks[i].c.t.ty = y_centro + d*sin(arena.checks[i].c.t.rz*M_PI/180.0);
+		}
+	}
+	glutPostRedisplay();
+	glutTimerFunc(10000, reseta_checkpoints, 1);
+}
+
+void restaura_checkpoints(int arg){
+	if(!arena.checks.empty()){
+		for(int i = 0; i < arena.checks.size(); i++){
+			arena.checks[i].flag_ativo = true;
+			arena.checks[i].num_tiros = rand()%21;
+		}
+	}
+	glutPostRedisplay();
+	glutTimerFunc(10000, restaura_checkpoints, 1);
+}
+
 void desenha_arena(void){
 
 	for(int i = 0; i < arena.enemys.size(); i++){
@@ -191,7 +250,7 @@ void desenha_arena(void){
 			}
 		}
 		else if (!arena.enemys[i].flag_vivo)
-			glutTimerFunc(20000, respawnEnemy, i);
+			glutTimerFunc(15000, respawnEnemy, i);
 	}
 
 	for(int i = 0; i < arena.rects.size(); i++){
@@ -199,6 +258,17 @@ void desenha_arena(void){
 			glTranslatef(arena.rects[i].t.tx, arena.rects[i].t.ty, 0.0);
 			draw_rect(arena.rects[i].larg, arena.rects[i].comp, arena.rects[i].c);
 		glPopMatrix();
+	}
+
+	for(int i = 0; i < arena.checks.size(); i++){
+		if(arena.checks[i].flag_ativo){
+			glPushMatrix();
+				glTranslatef(arena.checks[i].c.t.tx, arena.checks[i].c.t.ty, 0.0);
+				draw_circle(arena.checks[i].c.raio, arena.checks[i].c.c);
+			glPopMatrix();
+
+			arena.checks[i].movimento();
+		}
 	}
 
 	glutPostRedisplay();
@@ -270,6 +340,9 @@ void cria_carro(void){
 	//desenhando na ordem que o desenho fique correto
 	//variaveis numéricas definidas em "globais.h"
 	for(int i = 0; i < arena.cars.size(); i++){
+
+		arena.cars[i].qtd_tiros = 10;
+
 		arena.cars[i].vel_carro = velelocidade_carro;
 		arena.cars[i].range_tiro = raio_maior * 2;
 		arena.cars[i].t_carro.rz = 0;
@@ -454,19 +527,6 @@ void desenha_tiros_inimigos(void){
 				}
 				arena.enemys[i].limpa_tiros();
 			}			
-		}
-	}
-}
-
-void redesenha_inimigo(int arg){
-	if(arg != -1){
-		int inimigo = arg - arena.enemys.size();
-		if(arg >= 0){
-			arena.enemys[inimigo].vida = 3;
-			arena.enemys[inimigo].flag_vivo = true;
-		}else{
-			int time = 1200 + rand()%3500;
-			glutTimerFunc(time, redesenha_inimigo, arena.enemys.size() + inimigo);
 		}
 	}
 }
@@ -660,6 +720,10 @@ void tecladoOps(void){
 		}
 	}
 
+	if(teclas['w'] || teclas['s']){
+		arena.cars[0].coletar_chekpoints(&arena.checks);
+	}
+
 	if(arena.cars[0].t_carro.rz > 360){
 		arena.cars[0].t_carro.rz -= 360;
 	} 
@@ -695,7 +759,10 @@ circ novoTiro(void){
 
 void mouse(int btn, int state, int x, int y){
 	if(btn == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
-		arena.cars[0].tiros.push_back(novoTiro());
+		if(arena.cars[0].qtd_tiros > 0){
+			arena.cars[0].tiros.push_back(novoTiro());
+			arena.cars[0].qtd_tiros--;
+		}
 	} 
 	if ((btn == 3) || (btn == 4)){//scroll
        // Each wheel event reports like a button click, GLUT_DOWN then GLUT_UP

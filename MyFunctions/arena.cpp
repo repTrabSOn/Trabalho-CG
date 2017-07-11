@@ -1,5 +1,35 @@
 #include "globais.h"
 
+class CheckPoint{
+public:
+	bool flag_ativo, flag_direcao;
+	circ c;
+	int num_tiros;
+	float vel;
+	void movimento(void);
+
+};
+
+void CheckPoint::movimento(void){
+	float d_x = vel * cos((c.t.rz) * M_PI / 180.0);
+	float d_y = vel * sin((c.t.rz) * M_PI / 180.0);
+
+	float d = sqrt(pow(c.t.tx + d_x - x_centro, 2) + pow(c.t.ty + d_y - y_centro, 2));
+	if(d + c.raio > raio_maior || d - c.raio < raio_menor){
+		flag_direcao = !flag_direcao;
+	}
+
+	//estou indo para direcao do centro
+	if(!flag_direcao){
+		d_x *= -1;
+		d_y *= -1;
+	}
+
+	c.t.tx += d_x;
+	c.t.ty += d_y;
+}
+ 
+
 class Enemy{
 public:
 	bool flag_vivo, flag_direcao;
@@ -77,7 +107,7 @@ void Enemy::movimento(void){
 class Carro{
 public:
 	bool flag_vivo;
-	int vida;
+	int vida, qtd_tiros;
 	std::vector<rect> rodas_articuldas;
 	std::vector<rect> rodas_estaticas;
 	std::vector<rect> partes_estaticas;
@@ -93,6 +123,7 @@ public:
 	bool colisao(float new_x, float new_y, float rot, float l_inf, float l_sup, std::vector<Enemy> inimigos);
 	float dist(float x1, float y1, float x2, float y2);
 	bool colisao_tiros();
+	bool coletar_chekpoints(std::vector<CheckPoint> * c);
 };
 
 void Carro::acelerar(unsigned char key, bool turbo, float rot, float l_inf, float l_sup, std::vector<Enemy> inimigos){
@@ -151,7 +182,7 @@ float Carro::dist(float x1, float y1, float x2, float y2){
 
 bool Carro::colisao(float new_x, float new_y, float rot, float l_inf, float l_sup, std::vector<Enemy> inimigos){
 	//colisao com os limites da arena
-			std::vector<sensor> s_aux = sensores;
+	std::vector<sensor> s_aux = sensores;
 
 	if(rot != 0){
 		float c_ang = cos((rot) * M_PI / 180.0);
@@ -207,6 +238,22 @@ bool Carro::colisao(float new_x, float new_y, float rot, float l_inf, float l_su
 	return flagResp;
 }
 
+bool Carro::coletar_chekpoints(std::vector<CheckPoint> * c){
+	if(!(*c).empty()){
+		float r = (c_chassi/2.0 + c_canhao/2.0 + dist_centro_rot_canhao)* ESCALA;
+		for(int i = 0; i < (*c).size(); i++){
+			if((*c)[i].flag_ativo){
+				float d = sqrt(pow((*c)[i].c.t.tx - t_carro.tx, 2) + pow((*c)[i].c.t.ty - t_carro.ty, 2));
+				if(d - r < (*c)[i].c.raio){
+					(*c)[i].flag_ativo = false;
+					qtd_tiros += (*c)[i].num_tiros;
+				}
+			}
+		}
+	}
+
+}
+
 
 
 
@@ -217,6 +264,7 @@ public:
 	std::vector<Enemy> enemys;
 	std::vector<rect> rects;
 	std::vector<Carro> cars;
+	std::vector<CheckPoint> checks;
 	trans t_arena;
 };
 

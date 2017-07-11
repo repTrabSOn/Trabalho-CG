@@ -32,7 +32,8 @@ int main(int argc, char * argv[]){
     glutPassiveMotionFunc(passiveMotion);
     glutTimerFunc(1500, limpa_fogs, 1);
     glutTimerFunc(500, cria_tiros_inimigos, 1);
-    glutTimerFunc(10, redesenha_inimigo, -1);
+    glutTimerFunc(10000, reseta_checkpoints, 1);
+    glutTimerFunc(10000, restaura_checkpoints, 1);
 
 
     //joystick
