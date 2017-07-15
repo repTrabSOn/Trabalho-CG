@@ -100,7 +100,8 @@ void Enemy::movimento(vector<sensor> sens){
 	c.t.ty += d_y;
 
 	float distancia = dist(sens[0].x, sens[0].y, c.t.tx, c.t.ty);
-	if (c.raio < distancia - sens[0].raio){
+	if (distancia - sens[0].raio < c.raio){
+		cout << "OPAAAA" << endl;
 		status_atual = GAME_OVER;
 	}
 
