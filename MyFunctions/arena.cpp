@@ -28,7 +28,10 @@ void CheckPoint::movimento(void){
 	c.t.tx += d_x;
 	c.t.ty += d_y;
 }
- 
+
+
+
+//////////////////////////////////////////////////
 
 class Enemy{
 public:
@@ -36,39 +39,34 @@ public:
 	int id, vida;
 	float vel, vel_tiro, freq_tiro;
 	circ c;
-	std::vector<circ> tiros;
+	vector<circ> tiros;
 	void limpa_tiros(void);
-	void movimento(void);
+	void movimento(std::vector<sensor> sens);
 	void atira(int x, int y);
+	float dist(float x1, float y1, float x2, float y2);
 	//void especial(void);
 };
 
 void Enemy::atira(int x, int y){
 	circ novo;
-	//int ang_aux = rand()%361;
-	float d = sqrt(pow(c.t.tx - x, 2) + pow(c.t.ty - y, 2));
-	float ang_aux = acos((c.t.ty - y)/d)*180.0/M_PI;
+	float deltax = x - c.t.tx;
+	float deltay = y - c.t.ty;
+	float d = sqrt(deltay*deltay + deltax*deltax);
 
-	if(c.t.tx < x){
-		ang_aux = 180 - ang_aux;
-		if(c.t.ty < y){
-			ang_aux += 90;
-		}
-	}else{
-		if(c.t.ty < y){
-			ang_aux = 360 - c.t.rz;
-		}
-	}		
-
-	novo.t.tx = c.t.tx + cos(ang_aux * M_PI / 180.0) * c.raio;
-	novo.t.ty = c.t.ty + sin(ang_aux * M_PI / 180.0) * c.raio;
-
-	novo.raio = 3 * 1.0/(float)ESCALA;
-	novo.t.rz = ang_aux;
+	novo.cos = deltax / d;
+	novo.sin = deltay / d;
+	novo.t.tx = c.t.tx + c.raio * novo.cos;
+	novo.t.ty = c.t.ty + c.raio * novo.sin;
 	novo.c.r = 1.0; novo.c.g = 1.0; novo.c.b = 0.0;
+	novo.raio = 3 * 1.0/(float)ESCALA;
 	tiros.push_back(novo);
 }
 
+float Enemy::dist(float x1, float y1, float x2, float y2){
+	float dx = x1 - x2;
+	float dy = y1 - y2;
+	return sqrt(dx*dx + dy*dy);
+}
 
 void Enemy::limpa_tiros(void){
 	if(!tiros.empty()){
@@ -83,7 +81,7 @@ void Enemy::limpa_tiros(void){
 	}
 }
 
-void Enemy::movimento(void){
+void Enemy::movimento(vector<sensor> sens){
 	float d_x = vel * cos((c.t.rz) * M_PI / 180.0);
 	float d_y = vel * sin((c.t.rz) * M_PI / 180.0);
 
@@ -100,6 +98,12 @@ void Enemy::movimento(void){
 
 	c.t.tx += d_x;
 	c.t.ty += d_y;
+
+	float distancia = dist(sens[0].x, sens[0].y, c.t.tx, c.t.ty);
+	if (c.raio < distancia - sens[0].raio){
+		status_atual = GAME_OVER;
+	}
+
 }
 
 
@@ -118,7 +122,7 @@ public:
 	std::vector<sensor> sensores;
 	trans t_carro;
 	float vel_carro, vel_tiro, range_tiro;
-	void acelerar(unsigned char key, bool turbo, float rot, float l_inf, float l_sup, std::vector<Enemy> inimigos);
+	void acelerar(unsigned char key, bool turbo, float rot, float l_inf, float l_sup, vector<Enemy> inimigos, vector<CheckPoint> * c);
 	void limpa_tiros(void);
 	bool colisao(float new_x, float new_y, float rot, float l_inf, float l_sup, std::vector<Enemy> inimigos);
 	float dist(float x1, float y1, float x2, float y2);
@@ -126,9 +130,11 @@ public:
 	bool coletar_chekpoints(std::vector<CheckPoint> * c);
 };
 
-void Carro::acelerar(unsigned char key, bool turbo, float rot, float l_inf, float l_sup, std::vector<Enemy> inimigos){
+void Carro::acelerar(unsigned char key, bool turbo, float rot, float l_inf, float l_sup, vector<Enemy> inimigos, vector<CheckPoint> * c){
 	float desloc_x = vel_carro * cos((t_carro.rz + ANG_REF) * M_PI / 180.0);
 	float desloc_y = vel_carro * sin((t_carro.rz + ANG_REF) * M_PI / 180.0);
+
+	coletar_chekpoints(c);
 
 
 	if(key == 'w'){//para frente
@@ -164,8 +170,7 @@ void Carro::limpa_tiros(void){
 		for(int i = 0; i < tiros.size(); i++){
 			float d = sqrt(pow(tiros[i].t.tx - x_centro, 2) + pow(tiros[i].t.ty - y_centro, 2));
 			if(d > raio_maior || d < raio_menor){
-				tiros[i] = tiros[tiros.size() - 1];
-				tiros.pop_back();
+				tiros.erase(tiros.begin() + i);
 				i--;
 			}
 
@@ -223,9 +228,9 @@ bool Carro::colisao(float new_x, float new_y, float rot, float l_inf, float l_su
 			else if(inimigos[i].flag_vivo && inimigos[i].c.tipo == TIPO_INIMIGO){
 				if(d - r < inimigos[i].c.raio){
 					flagResp  = true;
-					flag_vivo = false;
+					vida--;
 					if (vida == 0)
-						gameOver = true;
+						flag_vivo = false;
 				}
 			}
 		}

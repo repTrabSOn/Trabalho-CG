@@ -79,9 +79,11 @@ Arena get_arena_svg(char * path, params p){
 				Carro c;
 				c.vel_tiro = p.vel_tiro_carro;
 				c.t_carro.tx = atof(cx);
+				x_car_ini = c.t_carro.tx;
 				c.t_carro.ty = atof(cy);
+				y_car_ini = c.t_carro.ty;
 				c.flag_vivo = true;
-				c.vida = 3;
+				c.vida = QTD_MAX_VIDAS;
 				arena.cars.push_back(c);
 			}
 		}

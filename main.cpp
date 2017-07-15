@@ -30,11 +30,10 @@ int main(int argc, char * argv[]){
     glutKeyboardUpFunc(teclaUp);
     glutMouseFunc(mouse);
     glutPassiveMotionFunc(passiveMotion);
-    glutTimerFunc(1500, limpa_fogs, 1);
-    glutTimerFunc(500, cria_tiros_inimigos, 1);
-    glutTimerFunc(10000, reseta_checkpoints, 1);
-    glutTimerFunc(10000, restaura_checkpoints, 1);
-    glutTimerFunc(10000, restaura_carro, 1);
+    glutTimerFunc(1500, timer, CRIAR_TIRO_INIMIGO);
+    glutTimerFunc(500, timer, LIMPAR_FOG);
+    glutTimerFunc(10000, timer, RESETA_CHECK);
+    glutTimerFunc(10000, timer, RESTAURA_CHECK);
 
 
     //joystick

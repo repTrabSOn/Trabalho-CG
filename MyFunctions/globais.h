@@ -19,20 +19,9 @@ using namespace std;
 typedef enum {TIPO_PISTA, TIPO_LARG_CHEGADA, TIPO_INIMIGO, TIPO_CARRO, TIPO_RODA_SUP, TIPO_RODA_INF,
 			 TIPO_EIXO, TIPO_CHASSI, TIPO_CANHAO, TIPO_CIRC, TIPO_VEL_NORMAL, TIPO_VEL_TURBO}tipo;
 
-/*
-#define TIPO_PISTA 0
-#define TIPO_LARG_CHEGADA 1
-#define TIPO_INIMIGO 2
-#define TIPO_CARRO 3
-#define TIPO_RODA_SUP 4
-#define TIPO_RODA_INF 5
-#define TIPO_EIXO 6
-#define TIPO_CHASSI 7
-#define TIPO_CANHAO 8
-#define TIPO_CIRC 9
-#define TIPO_VEL_NORMAL 10
-#define TIPO_VEL_TURBO 11
-*/
+typedef enum{LIMPAR_FOG, CRIAR_TIRO_INIMIGO, RESETA_CHECK, RESTAURA_CHECK}time_type;
+
+typedef enum{INIT, RUN, GAME_OVER, WINNER}status_game;
  
 
 //ESTRUTURAS DE DADOS
@@ -54,6 +43,8 @@ typedef struct retangulos{
 }rect;
 
 typedef struct circulos{
+	//reservadas para o tiro do inimigo, onde sera calculado apenas o cos e o sin do ang do tiro
+	float cos, sin;
 	int tipo;
 	float raio;
 	trans t;
@@ -61,7 +52,7 @@ typedef struct circulos{
 }circ;
 
 typedef struct sensor{
-	float x, y;
+	float x, y, raio;
 }sensor;
 
 typedef struct params{
@@ -88,13 +79,17 @@ float x_ini, x_fim, y_ini, y_fim;
 
 float x_centro, y_centro;
 
+float x_car_ini, y_car_ini;
+vector<sensor> s_ini;
+
 bool teclas[256]; 	//256 qtd de teclas contidas no padrao ASCII
 
 int status = START;
 
-bool flagJoystick = false;
+int qtd_checks_arena = 4;
+int checkpoints_arena[4];
 
-bool gameOver = false;
+bool flagJoystick = false;
 
 /////////////////////////////  CARRO //////////////////////////////
 float angMaxRoda = 45.0, angMaxCanhao = 45.0;
@@ -109,9 +104,22 @@ bool flag_turbo = false;
 
 bool flagSensores = false;
 
+status_game status_atual = INIT;
+
+char texto_fim[] = "DEU RUIM";
+char text_fim_reseta[] = "press r para recomecar";
+char texto_vencedor[] = "YOU WIN!!!";
+char text_init[] = "press space para iniciar...";
+
 float ESCALA = 1.0;
 
 ////////
+bool vitoria = false;
+int QTD_MAX_VIDAS = 5;
+bool flagsVolta[4];
+int num_voltas = 0;
+int voltas_max = 5;
+
 float angRoda = 0, angCarro = 0, angCanhao = 0;
 int x_ant = 0; //captura as infs do mouse para virar o canhao
 
@@ -124,5 +132,15 @@ float dist_centro_rot_chassi = (c_chassi / 2.0) - (c_roda / 2.0); //em cima do e
 float dist_centro_rot_canhao = (c_canhao / 2) * 0.9; //rotaciona a 90% do braco do chassi a partir do centro
 
 /////////////////////////////  CARRO //////////////////////////////
+
+//////////////////////////// JOYSTICK /////////////////////////////
+bool btn_r2 = false;
+bool btn_l2 = false;
+bool btn_r1 = false;
+bool btn_l1 = false;
+bool btn_triangle = false;
+int  x_axis  = 0;
+int  y_axis  = 0;
+int  z_axis  = 0;
 
 #endif

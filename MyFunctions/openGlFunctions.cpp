@@ -5,8 +5,9 @@ Arena arena;
 
 void cria_carro(void); //funcao responsável por criar todas as partes do carro
 void desenha_arena(void);
+void desenha_vidas(void);
 void desenha_carro(void);
-void desenha_tiros(void);
+void desenha_tiros_carros(void);
 void desenha_fogs(void);
 void tecladoOps(void);
 void draw_circle(float r, cor rgb);
@@ -16,6 +17,11 @@ void cria_tiros_inimigos(void);
 bool detectaColisaoTiroPlayerInimigo (Carro car, circ tiro);
 void respawnEnemy (int i);
 void joystickOPS(void);
+void desenha_tela_game_over(void);
+void desenha_tela_vencedor(void);
+void desenha_tela_init(void);
+void restaura_checkpoints(void);
+void reseta_checkpoints(void);
 
 
 /*
@@ -111,29 +117,121 @@ void desenha(void){
 	glClearColor(1.0, 1.0, 1.0, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-
-	desenha_arena();
-
-	desenha_sensores(flagSensores);
-
-	desenha_tiros();
-
-	desenha_tiros_inimigos();
-
-	desenha_fogs();
-
-	desenha_carro();
-	
 	if(flagJoystick){
 		joystickOPS();
 	}else{
 		tecladoOps();
 	}
+
+	if(status_atual == INIT){
+		desenha_tela_init();
+	}
+	else if(status_atual == RUN){
+		desenha_arena();
+
+		desenha_vidas();
+
+		desenha_sensores(flagSensores);
+
+		desenha_tiros_carros();
+
+		desenha_tiros_inimigos();
+
+		desenha_fogs();
+
+		desenha_carro();
+		
+	}else if(status_atual == GAME_OVER){
+		desenha_tela_game_over();
+	}
+	else{
+		desenha_tela_vencedor();
+	}
+	
 	
 	glutSwapBuffers();	
 }
 
 //////////////////////////////////// DESENHOS ///////////////////////////////
+void DesenhaTextoStroke(void *font, char *string){  
+	// Exibe caractere a caractere
+	while(*string)
+		glutStrokeCharacter(GLUT_STROKE_ROMAN,*string++); 
+}
+
+void desenha_tela_game_over(void){
+	glClearColor(0.2, 0.2, 0.2, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glPushMatrix();
+		//glColor3f(1.0, 1.0, 1.0);
+		glTranslatef(x_centro - raio_maior*0.5, y_centro + raio_menor*0.5, 0);
+		glScalef(0.5, 0.5, 1);
+		glLineWidth(2);
+		DesenhaTextoStroke(GLUT_STROKE_ROMAN, texto_fim);
+	glPopMatrix();
+
+	glPushMatrix();
+		glColor3f((55 + rand()%201) / 255.0, (55 + rand()%201) / 255.0, (55 + rand()%201) / 255.0);
+		glTranslatef(x_centro - raio_maior*0.65, y_centro, 0);
+		glScalef(0.3, 0.3, 1);
+		glLineWidth(2);
+		DesenhaTextoStroke(GLUT_STROKE_ROMAN, text_fim_reseta);
+	glPopMatrix();
+}
+
+void desenha_tela_vencedor(void){
+	glClearColor(0.2, 0.2, 0.2, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glPushMatrix();
+		//glColor3f(1.0, 1.0, 1.0);
+		glTranslatef(x_centro - raio_maior*0.5, y_centro + raio_menor*0.5, 0);
+		glScalef(0.5, 0.5, 1);
+		glLineWidth(2);
+		DesenhaTextoStroke(GLUT_STROKE_ROMAN, texto_vencedor);
+	glPopMatrix();
+
+	glPushMatrix();
+		glColor3f((55 + rand()%201) / 255.0, (55 + rand()%201) / 255.0, (55 + rand()%201) / 255.0);
+		glTranslatef(x_centro - raio_maior*0.65, y_centro, 0);
+		glScalef(0.3, 0.3, 1);
+		glLineWidth(2);
+		DesenhaTextoStroke(GLUT_STROKE_ROMAN, text_fim_reseta);
+	glPopMatrix();
+
+	glutPostRedisplay();
+}
+
+void desenha_tela_init(void){
+	glClearColor(0.2, 0.2, 0.2, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glPushMatrix();
+		glColor3f((55 + rand()%201) / 255.0, (55 + rand()%201) / 255.0, (55 + rand()%201) / 255.0);
+		glTranslatef(x_centro - raio_maior*0.65, y_centro, 0);
+		glScalef(0.3, 0.3, 1);
+		glLineWidth(2);
+		DesenhaTextoStroke(GLUT_STROKE_ROMAN, text_init);
+	glPopMatrix();
+
+	glutPostRedisplay();
+}
+
+void desenha_vidas(void){
+	int esp = 0, cont = 5;
+	for(int i = 0; i < arena.cars[0].vida; i++){
+		cor c;
+		c.r = 1.0; c.g = 0.0; c.b = 0.0;
+		glPushMatrix();
+			glTranslatef(x_centro - raio_maior*0.95 + esp, y_centro + raio_maior*0.9, 0.0);
+			draw_circle(5, c);
+		glPopMatrix();
+		esp += cont;
+	}
+}
+
+
 void desenha_sensores(bool flag){
 	if(flag){
 		for(int i = 0; i < arena.cars.size(); i++) {
@@ -199,58 +297,6 @@ void draw_tires(float larg, float comp, cor rgb){//desenha o centro dos pneus na
 	glEnd();
 }
 
-void respawnEnemy (int i){
-	arena.enemys[i].vida = 3;
-	arena.enemys[i].c.c.r = 1;
-	arena.enemys[i].flag_vivo = true;
-}
-
-void reseta_checkpoints(int arg){
-	if(!arena.checks.empty()){
-		int ang_ant = 0;
-		for(int i = 0; i < arena.checks.size(); i++){
-			arena.checks[i].num_tiros = rand()%21;
-			arena.checks[i].c.t.rz = rand()%360;
-			if(i > 0){
-				ang_ant += rand()%130;
-				arena.checks[i].c.t.rz = ang_ant;
-			}
-
-			float d = (raio_menor + (raio_maior - raio_menor)/2.0);
-			arena.checks[i].c.t.tx = x_centro + d*cos(arena.checks[i].c.t.rz*M_PI/180.0);
-			arena.checks[i].c.t.ty = y_centro + d*sin(arena.checks[i].c.t.rz*M_PI/180.0);
-		}
-	}
-	glutPostRedisplay();
-	glutTimerFunc(10000, reseta_checkpoints, 1);
-}
-
-void restaura_checkpoints(int arg){
-	if(!arena.checks.empty()){
-		for(int i = 0; i < arena.checks.size(); i++){
-			arena.checks[i].flag_ativo = true;
-			arena.checks[i].num_tiros = rand()%21;
-		}
-	}
-	glutPostRedisplay();
-	glutTimerFunc(10000, restaura_checkpoints, 1);
-}
-
-void restaura_carro(int arg){
-	if(!arena.checks.empty()){
-		for(int i = 0; i < arena.cars.size(); i++){
-			if (arena.cars[i].flag_vivo == false){
-				arena.cars[i].flag_vivo = true;
-				arena.cars[i].qtd_tiros = rand()%21;
-				arena.cars[i].vida--;
-				// Setar aki o carro pra posição inicial
-			}
-		}
-	}
-	glutPostRedisplay();
-	glutTimerFunc(10000, restaura_carro, 1);
-}
-
 void desenha_arena(void){
 
 	for(int i = 0; i < arena.enemys.size(); i++){
@@ -261,7 +307,7 @@ void desenha_arena(void){
 			glPopMatrix();
 
 			if(arena.enemys[i].c.tipo == TIPO_INIMIGO){
-				arena.enemys[i].movimento();
+				arena.enemys[i].movimento(arena.cars[0].sensores);
 			}
 		}
 		else if (!arena.enemys[i].flag_vivo)
@@ -290,7 +336,7 @@ void desenha_arena(void){
 }
 
 void desenha_carro(void){
-	for(int j = 0; j < arena.cars.size() && arena.cars[0].flag_vivo; j++){
+	for(int j = 0; j < arena.cars.size(); j++){
 		glPushMatrix();
 			glTranslatef(arena.cars[j].t_carro.tx, arena.cars[j].t_carro.ty - dist_centro_rot_chassi, 0);
 			glRotatef(arena.cars[j].t_carro.rz, 0, 0, 1);
@@ -367,8 +413,11 @@ void cria_carro(void){
 		sensor s1;
 		s1.x = arena.cars[i].t_carro.tx;
 		s1.y = arena.cars[i].t_carro.ty;
+		s1.raio = (c_chassi/2.0 + c_canhao/2.0 + dist_centro_rot_canhao)* ESCALA;
 
 		arena.cars[i].sensores.push_back(s1);
+
+		s_ini = arena.cars[0].sensores;
 
 
 		//Eixos
@@ -473,48 +522,57 @@ void cria_carro(void){
 	}	
 }
 
-////// tiros
-
-// Faz oq o nome diz
-bool detectaColisaoTiroPlayerInimigo (Carro car, circ tiro){
-	bool flagResp = false;
-	for(int i = 0; i < arena.enemys.size(); i++){
-		if(!arena.enemys[i].tiros.empty()){
-			float d = car.dist(tiro.t.tx, tiro.t.ty, arena.enemys[i].c.t.tx, arena.enemys[i].c.t.ty);
-			if(arena.enemys[i].c.tipo == TIPO_INIMIGO && arena.enemys[i].flag_vivo){
-				if(d - tiro.raio < arena.enemys[i].c.raio){
-					flagResp  = true;
-					arena.enemys[i].vida--;
-					arena.enemys[i].c.c.r -= 0.3;
-					if (arena.enemys[i].vida == 0)
-						arena.enemys[i].flag_vivo = false;
-				}
-			}
-			
-		}
-
-	}
-	return flagResp;
-
+bool verificaVolta(void){
+	int i;
+	for (i = 0; i < 4; i++)
+		if (flagsVolta[i] != true)
+			return false;
+	return true;
 }
 
-bool detectaColisaoTiroInimigoPlayer (Carro car, circ tiro){
-	bool flagResp = false;
-	std::vector<sensor> s_aux = car.sensores;
-	for(int i = 0; i < car.sensores.size(); i++){
-			float d = car.dist(tiro.t.tx, tiro.t.ty, car.sensores[i].x, car.sensores[i].y);
-			if(car.flag_vivo){
-				if(d - tiro.raio < arena.enemys[i].c.raio){
-					flagResp  = true;
-					car.vida--;
-					if (car.vida == 0)
-						car.flag_vivo = false;
-				}
+void detectaVoltas(void){
+	int i;
+	// Para cada player no jogo
+	for (i = 0; i < arena.cars.size(); i++){
+		
+		// Verifica o quadrante em que o carro se encontra
+		// 1º Quadrante
+		if (arena.cars[i].sensores[0].y > y_centro && arena.cars[i].sensores[0].x > x_centro){
+			flagsVolta[0] = true;
+			// Verifica se a volta foi completada
+			if (verificaVolta() == true){
+				num_voltas++;
+				//printf("voltas: %d\n", num_voltas);
 			}
-
+			// Verifica se o player venceu
+			if (num_voltas == voltas_max){
+				status_atual = WINNER;
+				break;
+			}
+			flagsVolta[1] = false;
+		}
+		// 2º Quadrante
+		else if (arena.cars[i].sensores[0].y > y_centro && arena.cars[i].sensores[0].x < x_centro){
+			flagsVolta[1] = true;
+			flagsVolta[2] = false;
+		}
+		// 3º Quadrante
+		else if (arena.cars[i].sensores[0].y < y_centro && arena.cars[i].sensores[0].x < x_centro){
+			flagsVolta[2] = true;
+			flagsVolta[3] = false;
+		}
+		// 4º Quadrante
+		else if (arena.cars[i].sensores[0].y < y_centro && arena.cars[i].sensores[0].x > x_centro){
+			flagsVolta[3] = true;
+			flagsVolta[0] = false;
+		}
+		/*
+		//testes
+		for (int j = 0; j < 4; j++)
+			printf("%d ", (int)flagsVolta[j]);
+		printf("\n");
+		*/
 	}
-	return flagResp;
-
 }
 
 void desenha_tiros_inimigos(void){
@@ -524,51 +582,40 @@ void desenha_tiros_inimigos(void){
 				for(int j = 0; j < arena.enemys[i].tiros.size(); j++){
 
 					//Verifica aki a colisao de tiros inimigos com o player
-					if (detectaColisaoTiroInimigoPlayer(arena.cars[0], arena.enemys[i].tiros[i])){
-						arena.enemys[i].tiros[i] = arena.enemys[i].tiros[arena.enemys[i].tiros.size() - 1];
-						arena.enemys[i].tiros.pop_back();
-						i--;
+					float d = pow(arena.cars[0].sensores[0].x - arena.enemys[i].tiros[j].t.tx, 2);
+					d += pow(arena.cars[0].sensores[0].y - arena.enemys[i].tiros[j].t.ty, 2);
+					d = sqrt(d);
+					if(d - arena.cars[0].sensores[0].raio < arena.enemys[i].tiros[j].raio){
+						arena.enemys[i].tiros.erase(arena.enemys[i].tiros.begin() + j);
+						j--;
+						arena.cars[0].vida--;
+						if (arena.cars[0].vida <= 0)
+							status_atual = GAME_OVER;
 					}else{
-
 						glPushMatrix();
 							glTranslatef(arena.enemys[i].tiros[j].t.tx, arena.enemys[i].tiros[j].t.ty, 0.0);
 							draw_circle(arena.enemys[i].tiros[j].raio, arena.enemys[i].tiros[j].c);
 						glPopMatrix();
 
-						arena.enemys[i].tiros[j].t.tx += arena.enemys[i].vel_tiro * sin((arena.enemys[i].tiros[j].t.rz) * M_PI / 180.0);
-						arena.enemys[i].tiros[j].t.ty -= arena.enemys[i].vel_tiro * cos((arena.enemys[i].tiros[j].t.rz) * M_PI / 180.0);
-					}
-		
+						arena.enemys[i].tiros[j].t.tx += arena.enemys[i].vel_tiro * arena.enemys[i].tiros[j].cos;
+						arena.enemys[i].tiros[j].t.ty += arena.enemys[i].vel_tiro * arena.enemys[i].tiros[j].sin;
+					}				
 				}
 				arena.enemys[i].limpa_tiros();
 			}			
 		}
+		glutPostRedisplay();
 	}
 }
 
-
-void cria_tiros_inimigos(int arg){
-	int time = 0;
-	for(int i = 0; i < arena.enemys.size(); i++){
-		if(arena.enemys[i].c.tipo == TIPO_INIMIGO && arena.enemys[i].flag_vivo){
-			arena.enemys[i].atira(arena.cars[0].t_carro.tx, arena.cars[0].t_carro.ty);
-			time = 1 / arena.enemys[i].freq_tiro;
-		}
-	}
-	//int time = 1500 + rand()%5000;
-	glutTimerFunc(time, cria_tiros_inimigos, 1);
-	glutPostRedisplay();
-}
-
-void desenha_tiros(void){
+void desenha_tiros_carros(void){
 	if(!arena.cars[0].tiros.empty()){
 		for(int i = 0; i < arena.cars[0].tiros.size(); i++){
 
 			// verificar aki se tiro colide com inimigo
 			// se colide entao nao o desenha
 			if (detectaColisaoTiroPlayerInimigo(arena.cars[0], arena.cars[0].tiros[i])){
-				arena.cars[0].tiros[i] = arena.cars[0].tiros[arena.cars[0].tiros.size() - 1];
-				arena.cars[0].tiros.pop_back();
+				arena.cars[0].tiros.erase(arena.cars[0].tiros.begin() + i);
 				i--;
 			}else{
 				glPushMatrix();
@@ -605,15 +652,7 @@ void desenha_fogs(void){
 	}
 }
 
-void limpa_fogs(int p){
-	for(int i = 0; i < arena.cars.size(); i++){
-		if(!arena.cars[i].fogs.empty()){
-			arena.cars[i].fogs.erase(arena.cars[i].fogs.begin(), arena.cars[i].fogs.begin() + arena.cars[i].fogs.size()/2 + 1);
-		}
-	}
-	glutPostRedisplay();
-	glutTimerFunc(500, limpa_fogs, 1);
-}
+
 
 //////////////////////////////// TECLADO /////////////////////////////////////////
 
@@ -653,16 +692,36 @@ void teclaPress(unsigned char key, int x, int y){
 			cout << "TECLADO" << endl;
 		}
 	}
-	teclas[key] = true;
+	teclas[key] = true; 
+}
+
+void reseta_game(void){ 
+	status = START;
+	status_atual = RUN;
+	arena.cars[0].t_carro.tx = x_car_ini;
+	arena.cars[0].t_carro.ty = y_car_ini;
+	arena.cars[0].sensores = s_ini;
+	arena.cars[0].t_carro.rz = 0;
+	arena.cars[0].qtd_tiros = 5 + rand()%16;
+	arena.cars[0].vida = QTD_MAX_VIDAS;
+	for(int i = 0; i < qtd_checks_arena; i++){
+			checkpoints_arena[i] = 0;
+	}
+	for(int i = 0; i < arena.enemys.size(); i++){
+		arena.enemys[i].flag_vivo = true;
+		arena.enemys[i].vida = 3;
+	}
+	if(!arena.enemys.empty()){
+		for(int i = 0; i < arena.enemys.size(); i++){
+			arena.enemys[i].tiros.clear();
+		}
+	}
 }
 
 void tecladoOps(void){
-	if (arena.cars[0].flag_vivo == true){
-	//para manter a roda sempre na posicao original caso nao tenha nada pressionado
-	if(teclas['a'] == false && teclas['d'] == false){
-		for(int i = 0; i < arena.cars[0].rodas_articuldas.size(); i++){
-			arena.cars[0].rodas_articuldas[i].t.rz = 0;
-		}
+
+	if(teclas['r']){
+		reseta_game();
 	}
 
 	if(teclas['-']){
@@ -673,57 +732,24 @@ void tecladoOps(void){
 	}
 
 	if(teclas[32]){ //space
-		flag_turbo = true;
+		if(status_atual == RUN){
+			flag_turbo = true;
+		}
+		else if(status_atual == INIT){
+			reseta_game();
+		}
 	}else{
 		flag_turbo = false;
 	}
 
-	if(teclas['w'] == true || teclas['s'] == true){
-		status = START;	
-		if(teclas['s'] == true){
-			flag_turbo = false;
-			
+	//para manter a roda sempre na posicao original caso nao tenha nada pressionado
+	if(teclas['a'] == false && teclas['d'] == false){
+		for(int i = 0; i < arena.cars[0].rodas_articuldas.size(); i++){
+			arena.cars[0].rodas_articuldas[i].t.rz = 0;
 		}
-		arena.cars[0].fogs.push_back(novoFog(flag_turbo));
-	}else{
-		status = STOP;
 	}
-	
-	if(teclas['w'] == true && teclas['a'] == true){
-		if(arena.cars[0].rodas_articuldas[0].t.rz <= angMaxRoda){
-			arena.cars[0].rodas_articuldas[0].t.rz += TAXA_ROT_RODA;
-			arena.cars[0].rodas_articuldas[1].t.rz += TAXA_ROT_RODA;
-		}
-		arena.cars[0].acelerar('w', flag_turbo, arena.cars[0].rodas_articuldas[0].t.rz / TAXA_ROT_CARRO, raio_menor, raio_maior, arena.enemys);
-	}
-	else if(teclas['w'] == true && teclas['d'] == true){
-		if(arena.cars[0].rodas_articuldas[0].t.rz >= -angMaxRoda){
-			arena.cars[0].rodas_articuldas[0].t.rz -= TAXA_ROT_RODA;
-			arena.cars[0].rodas_articuldas[1].t.rz -= TAXA_ROT_RODA;
-		}
-		arena.cars[0].acelerar('w', flag_turbo, arena.cars[0].rodas_articuldas[0].t.rz / TAXA_ROT_CARRO, raio_menor, raio_maior, arena.enemys);
-	}
-	else if(teclas['s'] == true && teclas['d'] == true){
-		if(arena.cars[0].rodas_articuldas[0].t.rz >= -angMaxRoda){
-			arena.cars[0].rodas_articuldas[0].t.rz -= TAXA_ROT_RODA;
-			arena.cars[0].rodas_articuldas[1].t.rz -= TAXA_ROT_RODA;
-		}
-		arena.cars[0].acelerar('s', flag_turbo, -arena.cars[0].rodas_articuldas[0].t.rz / TAXA_ROT_CARRO, raio_menor, raio_maior, arena.enemys);
-	}
-	else if(teclas['s'] == true && teclas['a'] == true){
-		if(arena.cars[0].rodas_articuldas[0].t.rz <= angMaxRoda){
-			arena.cars[0].rodas_articuldas[0].t.rz += TAXA_ROT_RODA;
-			arena.cars[0].rodas_articuldas[1].t.rz += TAXA_ROT_RODA;
-		}
-		arena.cars[0].acelerar('s', flag_turbo, -arena.cars[0].rodas_articuldas[0].t.rz / TAXA_ROT_CARRO, raio_menor, raio_maior, arena.enemys);
-	}
-	else if(teclas['w']){
-		arena.cars[0].acelerar('w', flag_turbo, 0, raio_menor, raio_maior, arena.enemys);
-	}
-	else if(teclas['s']){
-		arena.cars[0].acelerar('s', flag_turbo,  0, raio_menor, raio_maior, arena.enemys);
-	}
-	else if(teclas['a']){
+
+	if(teclas['a']){
 		if(arena.cars[0].rodas_articuldas[0].t.rz <= angMaxRoda){
 			arena.cars[0].rodas_articuldas[0].t.rz += TAXA_ROT_RODA;
 			arena.cars[0].rodas_articuldas[1].t.rz += TAXA_ROT_RODA;
@@ -736,9 +762,26 @@ void tecladoOps(void){
 		}
 	}
 
-	if(teclas['w'] || teclas['s']){
-		arena.cars[0].coletar_chekpoints(&arena.checks);
+	if(teclas['w']){
+		status = START;
+		float ang = arena.cars[0].rodas_articuldas[0].t.rz / TAXA_ROT_CARRO;
+		arena.cars[0].fogs.push_back(novoFog(flag_turbo));
+		arena.cars[0].acelerar('w', flag_turbo, ang, raio_menor, raio_maior, arena.enemys, &arena.checks);
+		detectaVoltas();
 	}
+	else if(teclas['s']){
+		status = START;
+		flag_turbo = false;
+		float ang = -arena.cars[0].rodas_articuldas[0].t.rz / TAXA_ROT_CARRO;
+		arena.cars[0].fogs.push_back(novoFog(false));
+		arena.cars[0].acelerar('s', false, ang, raio_menor, raio_maior, arena.enemys, &arena.checks);
+		detectaVoltas();
+	}
+	else{
+		status = STOP;
+		flag_turbo = false;
+	}
+ 
 
 	if(arena.cars[0].t_carro.rz > 360){
 		arena.cars[0].t_carro.rz -= 360;
@@ -746,7 +789,7 @@ void tecladoOps(void){
 	else if(arena.cars[0].t_carro.rz < -360){
 		arena.cars[0].t_carro.rz += 360;
 	}
-}
+
 	glutPostRedisplay();
 }
 
@@ -827,15 +870,6 @@ void passiveMotion(int x, int y){
 
 //////////////////////////////   JOYSTICK
 
-bool btn_r2 = false;
-bool btn_l2 = false;
-bool btn_r1 = false;
-bool btn_l1 = false;
-bool btn_triangle = false;
-int  x_axis  = 0;
-int  y_axis  = 0;
-int  z_axis  = 0;
-
 void joystick(unsigned int btn, int x, int y, int z){
      x_axis  = x;
      y_axis  = y * -1;
@@ -843,7 +877,6 @@ void joystick(unsigned int btn, int x, int y, int z){
 
      //cout << "[x, y, z] : [" <<x_axis<<", "<<y_axis<<", " << z_axis<<"]" << endl;  
      //cout << "BOTAO: "<<btn << endl << endl;
-
     /*
 		btn = 32 -> R2
 		btn = 16 -> L2
@@ -881,8 +914,6 @@ void joystick(unsigned int btn, int x, int y, int z){
      if(btn == 1){
      	btn_triangle = true;
      }
- 	
- 
 }  
 
 void joystickOPS(void){
@@ -920,7 +951,7 @@ void joystickOPS(void){
 
 		float vel_aux = arena.cars[0].vel_carro;
 		arena.cars[0].vel_carro *= ((z_axis + 300) / 1000.0);
-		arena.cars[0].acelerar('w', btn_l1, ang, raio_menor, raio_maior, arena.enemys);
+		arena.cars[0].acelerar('w', btn_l1, ang, raio_menor, raio_maior, arena.enemys, &arena.checks);
 		arena.cars[0].vel_carro = vel_aux;
 	}
 	else if(z_axis < 0){
@@ -932,7 +963,7 @@ void joystickOPS(void){
 		}
 		float vel_aux = arena.cars[0].vel_carro;
 		arena.cars[0].vel_carro *= ((-z_axis + 300) / 1000.0);
-		arena.cars[0].acelerar('s', btn_l1, ang, raio_menor, raio_maior, arena.enemys);
+		arena.cars[0].acelerar('s', btn_l1, ang, raio_menor, raio_maior, arena.enemys, &arena.checks);
 		arena.cars[0].vel_carro = vel_aux;
 	}else{
 		status = STOP;
@@ -970,3 +1001,105 @@ void joystickOPS(void){
 		arena.cars[0].tiros.push_back(novoTiro());
 	}
 }
+
+
+////////////////////////////////   TIMER   //////////////////////////////////////////
+void timer(int arg){
+	int time = 0;
+	int argumento = -1;
+	if(arg == LIMPAR_FOG){
+		time = 500;
+		argumento = LIMPAR_FOG;
+		for(int i = 0; i < arena.cars.size(); i++){
+			if(!arena.cars[i].fogs.empty()){
+				arena.cars[i].fogs.erase(arena.cars[i].fogs.begin(), arena.cars[i].fogs.begin() + arena.cars[i].fogs.size()/2 + 1);
+			}
+		}
+
+	}
+	else if(arg == CRIAR_TIRO_INIMIGO){
+		argumento = CRIAR_TIRO_INIMIGO;
+		time = 1000;
+		if(status_atual == RUN){
+			for(int i = 0; i < arena.enemys.size(); i++){
+				if(arena.enemys[i].c.tipo == TIPO_INIMIGO && arena.enemys[i].flag_vivo){
+					arena.enemys[i].atira(arena.cars[0].t_carro.tx, arena.cars[0].t_carro.ty);
+					time = 1 / arena.enemys[i].freq_tiro;
+				}
+			}
+		}		
+	}
+	else if(arg == RESTAURA_CHECK){
+		time = 8500;
+		argumento = RESTAURA_CHECK;
+		restaura_checkpoints();
+	}
+	else if(arg == RESETA_CHECK){
+		time = 10000;
+		argumento = RESETA_CHECK;
+		reseta_checkpoints();
+	}
+
+	if(argumento != -1){
+		glutTimerFunc(time, timer, argumento);
+		glutPostRedisplay();
+	}
+}
+
+
+// Faz oq o nome diz
+bool detectaColisaoTiroPlayerInimigo (Carro car, circ tiro){
+	bool flagResp = false;
+	for(int i = 0; i < arena.enemys.size(); i++){
+		if(!arena.enemys[i].tiros.empty()){
+			float d = car.dist(tiro.t.tx, tiro.t.ty, arena.enemys[i].c.t.tx, arena.enemys[i].c.t.ty);
+			if(arena.enemys[i].c.tipo == TIPO_INIMIGO && arena.enemys[i].flag_vivo){
+				if(d - tiro.raio < arena.enemys[i].c.raio){
+					flagResp  = true;
+					arena.enemys[i].vida--;
+					arena.enemys[i].c.c.r -= 0.3;
+					if (arena.enemys[i].vida == 0)
+						arena.enemys[i].flag_vivo = false;
+				}
+			}
+			
+		}
+
+	}
+	return flagResp;
+
+}
+
+void respawnEnemy (int i){
+	arena.enemys[i].vida = 3;
+	arena.enemys[i].c.c.r = 1;
+	arena.enemys[i].flag_vivo = true;
+}
+
+void reseta_checkpoints(void){
+	if(!arena.checks.empty()){
+		int ang_ant = 0;
+		for(int i = 0; i < arena.checks.size(); i++){
+			arena.checks[i].num_tiros = rand()%21;
+			arena.checks[i].c.t.rz = rand()%360;
+			if(i > 0){
+				ang_ant += rand()%130;
+				arena.checks[i].c.t.rz = ang_ant;
+			}
+
+			float d = (raio_menor + (raio_maior - raio_menor)/2.0);
+			arena.checks[i].c.t.tx = x_centro + d*cos(arena.checks[i].c.t.rz*M_PI/180.0);
+			arena.checks[i].c.t.ty = y_centro + d*sin(arena.checks[i].c.t.rz*M_PI/180.0);
+		}
+	}
+}
+
+void restaura_checkpoints(void){
+	if(!arena.checks.empty()){
+		for(int i = 0; i < arena.checks.size(); i++){
+			arena.checks[i].flag_ativo = true;
+			arena.checks[i].num_tiros = rand()%21;
+		}
+	}
+}
+
