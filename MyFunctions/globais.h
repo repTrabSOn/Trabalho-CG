@@ -4,7 +4,9 @@
 //BIBLIOTECAS PADRÕES IMPORTADAS
 #include <iostream>
 #include <cmath>
-#include <string.h>	
+//#include <string.h>	
+#include <sstream>  
+#include <string>
 #include <vector>
 #include <stdlib.h>
 #include <GL/glut.h>
@@ -110,6 +112,9 @@ char texto_fim[] = "DEU RUIM";
 char text_fim_reseta[] = "press r para recomecar";
 char texto_vencedor[] = "YOU WIN!!!";
 char text_init[] = "press space para iniciar...";
+char text_life[] = "Life:";
+char text_qtd_tiros[] = "Tiros: ";
+char text_qtd_voltas[] = "Voltas: ";
 
 float ESCALA = 1.0;
 

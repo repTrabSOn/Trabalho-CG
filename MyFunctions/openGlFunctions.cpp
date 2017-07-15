@@ -5,7 +5,7 @@ Arena arena;
 
 void cria_carro(void); //funcao responsável por criar todas as partes do carro
 void desenha_arena(void);
-void desenha_vidas(void);
+void desenha_itens(void);
 void desenha_carro(void);
 void desenha_tiros_carros(void);
 void desenha_fogs(void);
@@ -129,7 +129,7 @@ void desenha(void){
 	else if(status_atual == RUN){
 		desenha_arena();
 
-		desenha_vidas();
+		desenha_itens();
 
 		desenha_sensores(flagSensores);
 
@@ -218,19 +218,60 @@ void desenha_tela_init(void){
 	glutPostRedisplay();
 }
 
-void desenha_vidas(void){
-	int esp = 0, cont = 5;
+void desenha_itens(void){
+	int esp = 0, cont = 10;
+	//desenha vidas
+	glPushMatrix();
+		glTranslatef(x_centro - raio_maior*0.95, y_centro + raio_maior*0.9, 0.0);
+		glScalef(0.1, 0.1, 1);
+		glColor3f(0.0, 0.0, 0.0);
+		DesenhaTextoStroke(GLUT_STROKE_ROMAN, text_life);
+	glPopMatrix();
 	for(int i = 0; i < arena.cars[0].vida; i++){
 		cor c;
 		c.r = 1.0; c.g = 0.0; c.b = 0.0;
 		glPushMatrix();
-			glTranslatef(x_centro - raio_maior*0.95 + esp, y_centro + raio_maior*0.9, 0.0);
+			glTranslatef(x_centro - raio_maior*0.85 + esp, y_centro + raio_maior*0.91, 0.0);
 			draw_circle(5, c);
 		glPopMatrix();
 		esp += cont;
 	}
-}
+	
+	string aux(text_qtd_tiros);
+	std::ostringstream os;
+	os << arena.cars[0].qtd_tiros;
+	aux += os.str();
 
+	char text_tiros[100];
+	strcpy(text_tiros, aux.c_str());
+
+	glPushMatrix();
+		glTranslatef(x_centro - raio_maior*0.95, y_centro + raio_maior*0.8, 0.0);
+		glScalef(0.1, 0.1, 1);
+		glColor3f(0.0, 0.0, 0.0);
+		DesenhaTextoStroke(GLUT_STROKE_ROMAN, text_tiros);
+	glPopMatrix();
+
+
+	//desenha na tela a quantidade de vooltas dadas
+	string aux_voltas(text_qtd_voltas);
+	std::ostringstream os_voltas;
+	os_voltas << num_voltas;
+	aux_voltas += os_voltas.str();
+
+	char text_voltas[100];
+	strcpy(text_voltas, aux_voltas.c_str());
+
+	glPushMatrix();
+		glTranslatef(x_centro + raio_maior*0.7, y_centro + raio_maior*0.95, 0.0);
+		glScalef(0.1, 0.1, 1);
+		glColor3f(0.0, 0.0, 0.0);
+		DesenhaTextoStroke(GLUT_STROKE_ROMAN, text_voltas);
+	glPopMatrix();
+
+	
+
+}
 
 void desenha_sensores(bool flag){
 	if(flag){
