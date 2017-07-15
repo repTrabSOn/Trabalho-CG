@@ -101,7 +101,6 @@ void Enemy::movimento(vector<sensor> sens){
 
 	float distancia = dist(sens[0].x, sens[0].y, c.t.tx, c.t.ty);
 	if (distancia - sens[0].raio < c.raio){
-		cout << "OPAAAA" << endl;
 		status_atual = GAME_OVER;
 	}
 
@@ -228,10 +227,12 @@ bool Carro::colisao(float new_x, float new_y, float rot, float l_inf, float l_su
 			}
 			else if(inimigos[i].flag_vivo && inimigos[i].c.tipo == TIPO_INIMIGO){
 				if(d - r < inimigos[i].c.raio){
+					status_atual = GAME_OVER;
 					flagResp  = true;
 					vida--;
 					if (vida == 0)
 						flag_vivo = false;
+					break;
 				}
 			}
 		}

@@ -22,6 +22,7 @@ void desenha_tela_vencedor(void);
 void desenha_tela_init(void);
 void restaura_checkpoints(void);
 void reseta_checkpoints(void);
+void reseta_game(void);
 
 
 /*
@@ -749,8 +750,7 @@ void reseta_game(void){
 			checkpoints_arena[i] = 0;
 	}
 	for(int i = 0; i < arena.enemys.size(); i++){
-		arena.enemys[i].flag_vivo = true;
-		arena.enemys[i].vida = 3;
+		respawnEnemy(i);
 	}
 	if(!arena.enemys.empty()){
 		for(int i = 0; i < arena.enemys.size(); i++){
@@ -1112,9 +1112,11 @@ bool detectaColisaoTiroPlayerInimigo (Carro car, circ tiro){
 }
 
 void respawnEnemy (int i){
-	arena.enemys[i].vida = 3;
-	arena.enemys[i].c.c.r = 1;
-	arena.enemys[i].flag_vivo = true;
+	if (arena.enemys[i].c.tipo == TIPO_INIMIGO){
+		arena.enemys[i].vida = 3;
+		arena.enemys[i].c.c.r = 1;
+		arena.enemys[i].flag_vivo = true;
+	}
 }
 
 void reseta_checkpoints(void){
