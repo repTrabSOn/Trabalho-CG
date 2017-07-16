@@ -746,16 +746,13 @@ void reseta_game(void){
 	arena.cars[0].t_carro.rz = 0;
 	arena.cars[0].qtd_tiros = 5 + rand()%16;
 	arena.cars[0].vida = QTD_MAX_VIDAS;
+	arena.cars[0].tiros.clear();
+	arena.cars[0].fogs.clear();
 	for(int i = 0; i < qtd_checks_arena; i++){
 			checkpoints_arena[i] = 0;
 	}
 	for(int i = 0; i < arena.enemys.size(); i++){
 		respawnEnemy(i);
-	}
-	if(!arena.enemys.empty()){
-		for(int i = 0; i < arena.enemys.size(); i++){
-			arena.enemys[i].tiros.clear();
-		}
 	}
 }
 
@@ -1116,6 +1113,7 @@ void respawnEnemy (int i){
 		arena.enemys[i].vida = 3;
 		arena.enemys[i].c.c.r = 1;
 		arena.enemys[i].flag_vivo = true;
+		arena.enemys[i].tiros.clear();
 	}
 }
 
